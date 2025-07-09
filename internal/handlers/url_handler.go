@@ -9,10 +9,12 @@ import (
 
 	"github.com/its-symon/urlshortener/internal/config"
 	"github.com/its-symon/urlshortener/internal/models"
+	"github.com/its-symon/urlshortener/internal/queue"
 	"github.com/its-symon/urlshortener/internal/repositories"
 	"github.com/its-symon/urlshortener/internal/services"
 
 	"github.com/gin-gonic/gin"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type URLHandler struct {
@@ -70,8 +72,20 @@ func (h *URLHandler) Redirect(c *gin.Context) {
 		return
 	}
 
-	// Fix: Ensure valid URL scheme
-	if !strings.HasPrefix(longURL, "http://") && !strings.HasPrefix(longURL, "https://") {
+	// Push shortCode to RabbitMQ for async processing
+	_ = queue.Channel.Publish(
+		"",             // exchange
+		"click_events", // routing key (queue name)
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(shortCode),
+		},
+	)
+
+	// Redirect
+	if !strings.HasPrefix(longURL, "http") {
 		longURL = "https://" + longURL
 	}
 
