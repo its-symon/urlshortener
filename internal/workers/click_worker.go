@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/its-symon/urlshortener/internal/config"
+	"github.com/its-symon/urlshortener/internal/models"
 	"github.com/its-symon/urlshortener/internal/queue"
 	"gorm.io/gorm"
 )
@@ -25,7 +26,7 @@ func StartClickWorker() {
 	log.Println("Click Worker started...")
 	for msg := range msgs {
 		shortCode := string(msg.Body)
-		err := config.DB.Model(&struct{ ClickCount int }{}).
+		err := config.DB.Model(&models.URLMapping{}).
 			Where("short_code = ?", shortCode).
 			UpdateColumn("click_count", gorm.Expr("click_count + ?", 1)).Error
 		if err != nil {

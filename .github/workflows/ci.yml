@@ -73,8 +73,9 @@ jobs:
 
       - name: Run application
         run: |
-          go run cmd/main.go &
-          sleep 5  # Wait for the server to start
+
+          go run cmd/worker/main.go & go run cmd/server/main.go &
+          sleep 10  # Wait for the server to start
 
       - name: 🏃‍♂️ Run stress test
         run: |
