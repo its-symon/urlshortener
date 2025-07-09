@@ -31,6 +31,14 @@ func StartClickWorker() {
 			UpdateColumn("click_count", gorm.Expr("click_count + ?", 1)).Error
 		if err != nil {
 			log.Printf("Failed to update click count for %s: %v", shortCode, err)
+			continue
+		}
+
+		var url models.URLMapping
+		if err := config.DB.Where("short_code = ?", shortCode).First(&url).Error; err == nil {
+			if url.ClickCount >= 100 {
+				log.Printf("URL %s reached %d clicks!", shortCode, url.ClickCount)
+			}
 		}
 	}
 }
