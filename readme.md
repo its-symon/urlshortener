@@ -61,6 +61,9 @@ PORT=8080
 
 ```bash
 docker-compose up -d
+
+go run cmd/worker/main.go
+go run cmd/server/main.go
 ```
 
 ### 4. Running Tests
