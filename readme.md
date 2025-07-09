@@ -4,7 +4,7 @@ A scalable, secure, and extensible URL Shortening API built with Go using Gin, G
 
 ---
 
-## 📦 Tech Stack
+## Tech Stack
 
 | Layer           | Tool/Library                     |
 |----------------|----------------------------------|
@@ -81,6 +81,15 @@ go test ./tests -v
 - Pull requests and suggestions welcome! Please fork and submit a PR.
 
 ---
+
+## Credits & Inspiration
+
+This project was made possible and inspired by these amazing resources:
+
+-  [URL Shortening Service in Go – Siddhesh Kh](https://medium.com/@siddheshkh/url-shortening-service-using-go-cf7e82395772)
+- [CI/CD for Go using GitHub Actions – Pavan Belagatti](https://dev.to/pavanbelagatti/learn-how-to-setup-a-cicd-pipeline-from-scratch-for-a-go-application-4m69)
+- [Implementing Swagger in Go – JuloTech](https://medium.com/julotech/implementing-swagger-in-go-projects-8579a5fb955)
+
 
 ## Author
 
