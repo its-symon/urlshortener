@@ -53,7 +53,7 @@ jobs:
       DB_PASSWORD: 12345
       DB_NAME: urlshortener
       REDIS_ADDR: localhost:6379
-      RABBITMQ_URL: amqp://guest:guest@localhost:5672/
+      RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672:5672/
       PORT: 8080
 
     steps:
