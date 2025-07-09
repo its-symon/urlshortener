@@ -15,6 +15,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	RedisAddr  string
+	APIKey     string
 }
 
 var AppConfig *Config
@@ -34,6 +35,7 @@ func LoadConfig() {
 		DBPassword: getEnv("DB_PASSWORD", ""),
 		DBName:     getEnv("DB_NAME", "urlshortener"),
 		RedisAddr:  getEnv("REDIS_ADDR", "localhost:6379"),
+		APIKey:     getEnv("API_KEY", "supersecretapikey123"),
 	}
 }
 
