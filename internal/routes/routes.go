@@ -14,6 +14,8 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine) {
+	tokenService := services.NewTokenService()
+	authHandler := handlers.NewAuthHandler(tokenService)
 	urlHandler := handlers.NewURLHandler()
 
 	r.GET("/", func(c *gin.Context) {
@@ -28,12 +30,14 @@ func RegisterRoutes(r *gin.Engine) {
 		c.JSON(200, gin.H{"status": "healthy"})
 	})
 
-	tokenService := services.NewTokenService()
-	authHandler := handlers.NewAuthHandler(tokenService)
+	// Public auth routes
+	r.POST("/login", authHandler.Login)
+	r.POST("/register", authHandler.Register)
 
-	r.POST("/auth/token", authHandler.GenerateToken)
+	// Protected route to generate API key (JWT required)
+	r.POST("/generate-api-key", middleware.JWTAuthMiddleware(tokenService), authHandler.GenerateApiKey)
 
-	// Protected routes
+	// Protected route using API key
 	r.POST("/shorten", middleware.APIKeyAuthMiddleware(), urlHandler.Shorten)
 
 	// Public routes

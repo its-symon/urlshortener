@@ -6,10 +6,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("SECRET_KEY") // Use env var in production
+var jwtKey = []byte("SECRET_KEY") // Use os.Getenv("JWT_SECRET") in production
 
 type Claims struct {
-	Username string `json:"username"`
+	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -19,11 +19,11 @@ func NewTokenService() *TokenService {
 	return &TokenService{}
 }
 
-func (s *TokenService) GenerateToken(username string) (string, error) {
+func (s *TokenService) GenerateToken(email string) (string, error) {
 	expirationTime := time.Now().AddDate(1, 0, 0)
 
 	claims := &Claims{
-		Username: username,
+		Email: email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
