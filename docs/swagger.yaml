@@ -1,0 +1,128 @@
+definitions:
+  models.ShortenRequest:
+    properties:
+      custom_alias:
+        type: string
+      expires_at:
+        type: string
+      long_url:
+        type: string
+    required:
+    - long_url
+    type: object
+  models.ShortenResponse:
+    properties:
+      click_count:
+        type: integer
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      long_url:
+        type: string
+      short_code:
+        type: string
+      short_url:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /{shortCode}:
+    get:
+      description: Redirects to the original URL for the given short code
+      parameters:
+      - description: Short code
+        in: path
+        name: shortCode
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Redirect
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Redirect short URL
+      tags:
+      - URL
+  /delete/{shortCode}:
+    delete:
+      description: Deletes the short URL by its short code
+      parameters:
+      - description: Short code
+        in: path
+        name: shortCode
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete short URL
+      tags:
+      - URL
+  /details/{shortCode}:
+    get:
+      description: Get metadata about the short URL (original, clicks, expiry)
+      parameters:
+      - description: Short code
+        in: path
+        name: shortCode
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ShortenResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get URL details
+      tags:
+      - URL
+  /shorten:
+    post:
+      consumes:
+      - application/json
+      description: Create a short URL from a long URL, optionally with a custom alias
+      parameters:
+      - description: URL to shorten
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ShortenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ShortenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Shorten a long URL
+      tags:
+      - URL
+swagger: "2.0"
