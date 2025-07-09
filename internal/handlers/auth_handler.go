@@ -25,6 +25,17 @@ type AuthRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Create a new user account with email and password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param register body AuthRequest true "User registration"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Router /register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req AuthRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -61,6 +72,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Login a user
+// @Description Authenticate user and return a JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param login body AuthRequest true "User login"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req AuthRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

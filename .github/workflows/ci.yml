@@ -53,7 +53,7 @@ jobs:
       DB_PASSWORD: 12345
       DB_NAME: urlshortener
       REDIS_ADDR: localhost:6379
-      RABBITMQ_URL: amqp://guest:guest@localhost:5672/
+      RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672:5672/
       PORT: 8080
 
     steps:
@@ -73,9 +73,18 @@ jobs:
 
       - name: Run application
         run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client redis-tools
 
-          go run cmd/worker/main.go & go run cmd/server/main.go &
-          sleep 10  # Wait for the server to start
+          # Wait for services
+          until pg_isready -h 127.0.0.1 -p 5432; do sleep 1; done
+          until redis-cli -h 127.0.0.1 ping | grep PONG; do sleep 1; done
+
+          go run cmd/worker/main.go &
+          go run cmd/server/main.go &
+          sleep 5
+
+          curl -f http://127.0.0.1:8080/health || (echo "Health check failed" && exit 1)
+
 
       - name: 🏃‍♂️ Run stress test
         run: |

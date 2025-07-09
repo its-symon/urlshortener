@@ -9,6 +9,16 @@ import (
 	"github.com/its-symon/urlshortener/internal/utils"
 )
 
+// GenerateApiKey godoc
+// @Summary Generate an API Key
+// @Description Generates a new API key for authenticated user and saves it in the database
+// @Tags Auth
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /generate-api-key [post]
 func (h *AuthHandler) GenerateApiKey(c *gin.Context) {
 	emailAny, exists := c.Get("email")
 	if !exists {

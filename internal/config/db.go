@@ -5,7 +5,9 @@ import (
 	"log"
 
 	"github.com/its-symon/urlshortener/internal/models"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -36,5 +38,25 @@ func ConnectDatabase() {
 	)
 	if err != nil {
 		log.Fatal("Failed DB migration:", err)
+	}
+}
+
+func ConnectTestDB() {
+	database, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Failed to connect to test database:", err)
+	}
+	DB = database
+
+	DB.AutoMigrate(&models.User{}, &models.ApiToken{}, &models.URLMapping{})
+}
+
+func ConnectTestRedis() {
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	_, err := RedisClient.Ping(RedisCtx).Result()
+	if err != nil {
+		log.Fatal("Failed to connect to Redis in tests:", err)
 	}
 }
