@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/its-symon/urlshortener/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -28,8 +29,11 @@ func ConnectDatabase() {
 	DB = database
 	fmt.Println("Connected to DB")
 
-	// Auto-migrate models
-	err = DB.AutoMigrate()
+	// Auto-migrate models (add your models here)
+	err = DB.AutoMigrate(
+		&models.User{},
+		&models.ApiToken{},
+	)
 	if err != nil {
 		log.Fatal("Failed DB migration:", err)
 	}

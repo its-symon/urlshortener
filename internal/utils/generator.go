@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"time"
 )
@@ -15,4 +16,13 @@ func GenerateShortCode(length int) string {
 		code[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(code)
+}
+
+func GenerateRandomToken() (string, error) {
+	b := make([]byte, 32) // 256-bit token
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }

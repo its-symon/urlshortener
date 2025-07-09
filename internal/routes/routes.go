@@ -2,6 +2,8 @@ package routes
 
 import (
 	"github.com/its-symon/urlshortener/internal/handlers"
+	"github.com/its-symon/urlshortener/internal/middleware"
+	"github.com/its-symon/urlshortener/internal/services"
 
 	"github.com/gin-gonic/gin"
 
@@ -12,6 +14,8 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine) {
+	tokenService := services.NewTokenService()
+	authHandler := handlers.NewAuthHandler(tokenService)
 	urlHandler := handlers.NewURLHandler()
 
 	r.GET("/", func(c *gin.Context) {
@@ -26,8 +30,17 @@ func RegisterRoutes(r *gin.Engine) {
 		c.JSON(200, gin.H{"status": "healthy"})
 	})
 
-	r.POST("/shorten", urlHandler.Shorten)
+	// Public auth routes
+	r.POST("/login", authHandler.Login)
+	r.POST("/register", authHandler.Register)
 
+	// Protected route to generate API key (JWT required)
+	r.POST("/generate-api-key", middleware.JWTAuthMiddleware(tokenService), authHandler.GenerateApiKey)
+
+	// Protected route using API key
+	r.POST("/shorten", middleware.APIKeyAuthMiddleware(), urlHandler.Shorten)
+
+	// Public routes
 	r.GET("/:shortCode", urlHandler.Redirect)
 
 	r.GET("/details/:shortCode", urlHandler.GetDetails)
