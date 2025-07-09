@@ -4,6 +4,11 @@ import (
 	"github.com/its-symon/urlshortener/internal/handlers"
 
 	"github.com/gin-gonic/gin"
+
+	_ "github.com/its-symon/urlshortener/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func RegisterRoutes(r *gin.Engine) {
@@ -29,4 +34,6 @@ func RegisterRoutes(r *gin.Engine) {
 
 	r.DELETE("delete/:shortCode", urlHandler.Delete)
 
+	// Swagger UI route
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

@@ -27,6 +27,16 @@ func NewURLHandler() *URLHandler {
 	return &URLHandler{Service: service}
 }
 
+// ShortenURL godoc
+// @Summary Shorten a long URL
+// @Description Create a short URL from a long URL, optionally with a custom alias
+// @Tags URL
+// @Accept json
+// @Produce json
+// @Param request body models.ShortenRequest true "URL to shorten"
+// @Success 200 {object} models.ShortenResponse
+// @Failure 400 {object} map[string]string
+// @Router /shorten [post]
 func (h *URLHandler) Shorten(c *gin.Context) {
 	// 1. Rate limit per IP
 	ip := c.ClientIP()
@@ -59,6 +69,14 @@ func (h *URLHandler) Shorten(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// Redirect godoc
+// @Summary Redirect short URL
+// @Description Redirects to the original URL for the given short code
+// @Tags URL
+// @Param shortCode path string true "Short code"
+// @Success 302 "Redirect"
+// @Failure 404 {object} map[string]string
+// @Router /{shortCode} [get]
 func (h *URLHandler) Redirect(c *gin.Context) {
 	shortCode := c.Param("shortCode")
 
@@ -92,6 +110,14 @@ func (h *URLHandler) Redirect(c *gin.Context) {
 	c.Redirect(http.StatusFound, longURL)
 }
 
+// GetDetails godoc
+// @Summary Get URL details
+// @Description Get metadata about the short URL (original, clicks, expiry)
+// @Tags URL
+// @Param shortCode path string true "Short code"
+// @Success 200 {object} models.ShortenResponse
+// @Failure 404 {object} map[string]string
+// @Router /details/{shortCode} [get]
 func (h *URLHandler) GetDetails(c *gin.Context) {
 	shortCode := c.Param("shortCode")
 
@@ -104,6 +130,14 @@ func (h *URLHandler) GetDetails(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// Delete godoc
+// @Summary Delete short URL
+// @Description Deletes the short URL by its short code
+// @Tags URL
+// @Param shortCode path string true "Short code"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /delete/{shortCode} [delete]
 func (h *URLHandler) Delete(c *gin.Context) {
 	shortCode := c.Param("shortCode")
 
