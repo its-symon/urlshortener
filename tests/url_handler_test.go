@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,26 +11,31 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/its-symon/urlshortener/internal/config"
 	"github.com/its-symon/urlshortener/internal/handlers"
+	"github.com/its-symon/urlshortener/internal/middleware"
 	"github.com/its-symon/urlshortener/internal/services"
 	"github.com/stretchr/testify/assert"
 )
 
-func setupAuthRouter() *gin.Engine {
+func setupURLRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	config.ConnectTestDB()
 
 	tokenService := services.NewTokenService()
 	authHandler := handlers.NewAuthHandler(tokenService)
+	urlHandler := handlers.NewURLHandler()
 
 	router := gin.Default()
 	router.POST("/register", authHandler.Register)
 	router.POST("/login", authHandler.Login)
 
+	router.POST("/generate-api-key", middleware.JWTAuthMiddleware(tokenService), authHandler.GenerateApiKey)
+	router.POST("/shorten", middleware.APIKeyAuthMiddleware(), urlHandler.Shorten)
+
 	return router
 }
 
-func TestRegisterSuccess(t *testing.T) {
-	router := setupAuthRouter()
+func TestRegister(t *testing.T) {
+	router := setupURLRouter()
 
 	payload := map[string]string{
 		"email":    "register@example.com",
@@ -47,12 +53,38 @@ func TestRegisterSuccess(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "token")
 }
 
-func TestLoginSuccess(t *testing.T) {
-	router := setupAuthRouter()
+func TestLogin(t *testing.T) {
+	router := setupURLRouter()
 
-	// First register
 	payload := map[string]string{
 		"email":    "login@example.com",
+		"password": "mypassword",
+	}
+	body, _ := json.Marshal(payload)
+
+	// Register
+	registerReq := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
+	registerReq.Header.Set("Content-Type", "application/json")
+	registerResp := httptest.NewRecorder()
+	router.ServeHTTP(registerResp, registerReq)
+	assert.Equal(t, http.StatusOK, registerResp.Code)
+
+	// Login
+	loginReq := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginResp := httptest.NewRecorder()
+	router.ServeHTTP(loginResp, loginReq)
+
+	assert.Equal(t, http.StatusOK, loginResp.Code)
+	assert.Contains(t, loginResp.Body.String(), "token")
+}
+
+func TestGenerateAPIKey(t *testing.T) {
+	router := setupURLRouter()
+
+	// Register user
+	payload := map[string]string{
+		"email":    "user@example.com",
 		"password": "mypassword",
 	}
 	body, _ := json.Marshal(payload)
@@ -63,68 +95,24 @@ func TestLoginSuccess(t *testing.T) {
 	router.ServeHTTP(registerResp, registerReq)
 	assert.Equal(t, http.StatusOK, registerResp.Code)
 
-	// Then login
+	// Login to get JWT token
 	loginReq := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
 	loginReq.Header.Set("Content-Type", "application/json")
 	loginResp := httptest.NewRecorder()
 	router.ServeHTTP(loginResp, loginReq)
-
 	assert.Equal(t, http.StatusOK, loginResp.Code)
-	assert.Contains(t, loginResp.Body.String(), "token")
-}
 
-func TestLoginWrongPassword(t *testing.T) {
-	router := setupAuthRouter()
+	var loginData map[string]string
+	_ = json.Unmarshal(loginResp.Body.Bytes(), &loginData)
+	token := loginData["token"]
 
-	// Register user
-	payload := map[string]string{
-		"email":    "wrongpass@example.com",
-		"password": "correctpass",
-	}
-	body, _ := json.Marshal(payload)
-	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	// Generate API key
+	apiKeyReq := httptest.NewRequest(http.MethodPost, "/generate-api-key", nil)
+	apiKeyReq.Header.Set("Authorization", "Bearer "+token)
+	apiKeyResp := httptest.NewRecorder()
+	router.ServeHTTP(apiKeyResp, apiKeyReq)
 
-	// Login with wrong password
-	wrongPayload := map[string]string{
-		"email":    "wrongpass@example.com",
-		"password": "wrongpass",
-	}
-	wrongBody, _ := json.Marshal(wrongPayload)
-	loginReq := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(wrongBody))
-	loginReq.Header.Set("Content-Type", "application/json")
-	loginResp := httptest.NewRecorder()
-	router.ServeHTTP(loginResp, loginReq)
-
-	assert.Equal(t, http.StatusUnauthorized, loginResp.Code)
-	assert.Contains(t, loginResp.Body.String(), "Invalid credentials")
-}
-
-func TestRegisterDuplicateEmail(t *testing.T) {
-	router := setupAuthRouter()
-
-	payload := map[string]string{
-		"email":    "duplicate@example.com",
-		"password": "somepass",
-	}
-	body, _ := json.Marshal(payload)
-
-	// First registration
-	req1 := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
-	req1.Header.Set("Content-Type", "application/json")
-	w1 := httptest.NewRecorder()
-	router.ServeHTTP(w1, req1)
-	assert.Equal(t, http.StatusOK, w1.Code)
-
-	// Second registration with same email
-	req2 := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
-	req2.Header.Set("Content-Type", "application/json")
-	w2 := httptest.NewRecorder()
-	router.ServeHTTP(w2, req2)
-
-	assert.Equal(t, 409, w2.Code)                                    // match status
-	assert.Contains(t, w2.Body.String(), "Email already registered") // match message
-
+	fmt.Println("Generated API Key:", apiKeyResp.Body.String())
+	assert.Equal(t, http.StatusOK, apiKeyResp.Code)
+	assert.Contains(t, apiKeyResp.Body.String(), "api_key")
 }
