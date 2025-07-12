@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("SECRET_KEY") // Use os.Getenv("JWT_SECRET") in production
+var jwtKey = []byte("SECRET_KEY")
 
 type Claims struct {
 	Email string `json:"email"`
