@@ -1,6 +1,13 @@
 version: '3.8'
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+
   postgres:
     image: postgres:14
     container_name: urlshortener_postgres
